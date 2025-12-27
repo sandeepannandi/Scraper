@@ -129,8 +129,7 @@ export async function scrapeBrandIdentity(url: string): Promise<BrandIdentity> {
                             const src = (element as any).src;
                             if (src && !src.includes('data:image')) return src;
                         } else if (element.tagName === 'SVG') {
-                            // For SVG, we'll return a placeholder since we can't easily extract it
-                            return 'svg-logo-found';
+                            return element.outerHTML;
                         }
                     }
                 }
@@ -164,8 +163,8 @@ export async function scrapeBrandIdentity(url: string): Promise<BrandIdentity> {
                 logo: findLogo(),
                 tagline: tagline,
                 description: description,
-                colors: Array.from(colorSet).slice(0, 8), // Top 8 colors
-                fonts: Array.from(fontSet).slice(0, 4),   // Top 4 fonts
+                colors: Array.from(colorSet).slice(0, 4), // Top 4 colors
+                fonts: Array.from(fontSet).slice(0, 3),   // Top 3 fonts
             };
         });
 
