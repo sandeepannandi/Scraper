@@ -17,7 +17,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 
 // Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
     res.json({
         status: 'ok',
         service: 'brand-scraper-service',
@@ -56,7 +56,7 @@ app.post('/api/scrape', async (req: Request, res: Response) => {
 
         console.log(`[${new Date().toISOString()}] Scraping completed in ${duration}ms`);
 
-        res.json({
+        return res.json({
             success: true,
             data: brandData,
             meta: {
@@ -67,7 +67,7 @@ app.post('/api/scrape', async (req: Request, res: Response) => {
     } catch (error) {
         console.error(`[${new Date().toISOString()}] Scraping failed:`, error);
 
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Scraping failed',
             message: error instanceof Error ? error.message : 'Unknown error occurred',
             url: url
@@ -76,7 +76,7 @@ app.post('/api/scrape', async (req: Request, res: Response) => {
 });
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
     res.status(404).json({
         error: 'Not found',
         message: 'The requested endpoint does not exist'
