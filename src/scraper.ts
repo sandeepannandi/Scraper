@@ -164,7 +164,7 @@ export async function scrapeBrandIdentity(url: string): Promise<BrandIdentity> {
                 tagline: tagline,
                 description: description,
                 colors: Array.from(colorSet).slice(0, 5), // Top 5 colors
-                fonts: Array.from(fontSet).slice(0, 3),   // Top 3 fonts
+                fonts: Array.from(fontSet).slice(0, 2),   // Top 3 fonts
             };
         });
 
