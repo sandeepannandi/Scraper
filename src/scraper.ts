@@ -94,14 +94,13 @@ export async function scrapeBrandIdentity(url: string): Promise<BrandIdentity> {
                 }
             });
 
-            // 3. LOGO DISCOVERY (Refined Heuristics)
+            // 3. LOGO DISCOVERY (Tab-First & Refined Heuristics)
             const findLogo = (): string | null => {
                 const getSrc = (el: Element): string | null => {
                     if (el.tagName === 'IMG') {
                         const src = (el as HTMLImageElement).src;
                         return (src && !src.includes('data:image')) ? src : null;
                     } else if (el.tagName === 'SVG') {
-                        // Only return SVG if it's reasonably sized (not a full page background)
                         const rect = el.getBoundingClientRect();
                         if (rect.width > 500 || rect.height > 500) return null;
                         return el.outerHTML;
@@ -109,7 +108,21 @@ export async function scrapeBrandIdentity(url: string): Promise<BrandIdentity> {
                     return null;
                 };
 
-                // Strategy 1: Look inside <header> or <nav> for logo-labeled elements
+                // Strategy 1: Tab Logo (Apple Touch Icon is usually best quality)
+                const appleIcon = document.querySelector('link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]');
+                if (appleIcon) {
+                    const href = appleIcon.getAttribute('href');
+                    if (href) return new URL(href, window.location.href).href;
+                }
+
+                // Strategy 2: Tab Logo (Standard Favicon)
+                const favicon = document.querySelector('link[rel*="icon"]');
+                if (favicon) {
+                    const href = favicon.getAttribute('href');
+                    if (href) return new URL(href, window.location.href).href;
+                }
+
+                // Strategy 3: Look inside <header> or <nav> for logo-labeled elements
                 const containers = document.querySelectorAll('header, nav, [class*="header" i], [class*="nav" i], [id*="header" i], [id*="nav" i]');
                 for (const container of containers) {
                     const logoEl = container.querySelector('img[class*="logo" i], img[id*="logo" i], img[alt*="logo" i], img[src*="logo" i], svg[class*="logo" i], svg[id*="logo" i], [class*="brand" i] img, [id*="brand" i] img');
@@ -117,31 +130,17 @@ export async function scrapeBrandIdentity(url: string): Promise<BrandIdentity> {
                     if (src) return src;
                 }
 
-                // Strategy 2: First <img> or <svg> in header/nav if no explicit logo class found
+                // Strategy 4: First <img> or <svg> in header/nav
                 for (const container of containers) {
                     const firstImg = container.querySelector('img, svg');
                     const src = firstImg ? getSrc(firstImg) : null;
                     if (src) return src;
                 }
 
-                // Strategy 3: Global search for logo-labeled elements
+                // Strategy 5: Global search for logo-labeled elements
                 const globalLogo = document.querySelector('img[class*="logo" i], img[id*="logo" i], img[alt*="logo" i], [itemprop="logo"] img, svg[class*="logo" i]');
                 const globalSrc = globalLogo ? getSrc(globalLogo) : null;
                 if (globalSrc) return globalSrc;
-
-                // Strategy 4: Apple Touch Icon
-                const appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
-                if (appleIcon) {
-                    const href = appleIcon.getAttribute('href');
-                    if (href) return new URL(href, window.location.href).href;
-                }
-
-                // Strategy 5: Favicon
-                const favicon = document.querySelector('link[rel*="icon"]');
-                if (favicon) {
-                    const href = favicon.getAttribute('href');
-                    if (href) return new URL(href, window.location.href).href;
-                }
 
                 // Strategy 6: OG Image (Last Resort fallback)
                 const ogImage = document.querySelector('meta[property="og:image"]');
@@ -173,7 +172,7 @@ export async function scrapeBrandIdentity(url: string): Promise<BrandIdentity> {
                 tagline: tagline,
                 description: description,
                 colors: Array.from(colorSet).slice(0, 5), // Top 5 colors
-                fonts: Array.from(fontSet).slice(0, 2),   // Top 3 fonts
+                fonts: Array.from(fontSet).slice(0, 3),   // Top 3 fonts
             };
         });
 
