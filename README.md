@@ -1,37 +1,52 @@
-# Brand Identity Scraper Service
+<div align="center">
 
-A high-performance REST API service built with **Playwright** and **TypeScript** that extracts brand identity elements from any website.
+# 🔍 Scraper
 
-## Features
+**A high-performance REST API that extracts brand identity elements from any website using Playwright and TypeScript.**
 
-Extracts the following brand assets from any URL:
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.40-2EAD33?style=flat-square&logo=playwright&logoColor=white)](https://playwright.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-- **Logo** - Discovers brand logos using multi-strategy heuristics (meta tags, common selectors, SVG detection)
-- **Tagline** - Extracts primary heading or Open Graph title
-- **Description** - Pulls meta descriptions and summary text
-- **Color Palette** - Analyzes computed styles to extract brand colors (up to 8 colors)
-- **Typography** - Detects fonts used across headings and body text (up to 4 fonts)
-- **Screenshot** - Captures viewport screenshot in base64 PNG format
+</div>
 
-## Quick Start
+---
+
+## ✨ Features
+
+| Feature                   | Description                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| 🖼️ **Logo Discovery**     | Multi-strategy heuristics — meta tags, common selectors, SVG detection, favicon fallback |
+| 💬 **Tagline Extraction** | Pulls primary `<h1>` heading or Open Graph title                                         |
+| 📝 **Description**        | Extracts meta descriptions and summary text                                              |
+| 🎨 **Color Palette**      | Analyzes computed styles to identify up to 5 brand colors                                |
+| 🔤 **Typography**         | Detects font families used across headings and body text                                 |
+| 📸 **Screenshot**         | Captures a viewport screenshot (1280×800) in base64 PNG format                           |
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- [Node.js](https://nodejs.org/) ≥ 18.0.0
 - npm or yarn
 
 ### Installation
 
 ```bash
-# Install dependencies
-npm install
+# Clone the repository
+git clone https://github.com/your-username/brand-identity-scraper.git
+cd brand-identity-scraper
 
-# Playwright will auto-install Chromium browser
+# Install dependencies (Chromium installs automatically via postinstall)
+npm install
 ```
 
 ### Configuration
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the project root:
 
 ```env
 PORT=3001
@@ -42,27 +57,24 @@ ALLOWED_ORIGINS=http://localhost:3000,https://your-production-domain.com
 ### Running the Service
 
 ```bash
-# Development mode (with hot reload)
+# Development (with hot reload)
 npm run dev
 
-# Build for production
+# Production build
 npm run build
 
 # Start production server
 npm start
 ```
 
-The service will start on `http://localhost:3001` (or your configured PORT).
+The API will be available at `http://localhost:3001`.
 
-## API Reference
+---
 
-### Health Check
+## 📖 API Reference
 
-```http
-GET /health
-```
+### `GET /health` — Health Check
 
-**Response:**
 ```json
 {
   "status": "ok",
@@ -71,18 +83,18 @@ GET /health
 }
 ```
 
-### Scrape Brand Identity
+### `POST /api/scrape` — Scrape Brand Identity
 
-```http
-POST /api/scrape
-Content-Type: application/json
+**Request:**
 
+```json
 {
   "url": "https://example.com"
 }
 ```
 
-**Response:**
+**Success Response (`200`):**
+
 ```json
 {
   "success": true,
@@ -102,7 +114,8 @@ Content-Type: application/json
 }
 ```
 
-**Error Response:**
+**Error Response (`500`):**
+
 ```json
 {
   "error": "Scraping failed",
@@ -111,89 +124,129 @@ Content-Type: application/json
 }
 ```
 
-## ⚡ Performance
+---
 
-- **Average scrape time:** 2-5 seconds for simple sites
-- **Complex sites:** 5-8 seconds
-- **Optimizations:**
-  - Headless browser mode
-  - Network idle detection
-  - Parallel extraction using `page.evaluate()`
-  - Viewport-only screenshots
+## 🐳 Docker
 
-## 🛠️ Technical Details
+```bash
+# Build the image
+docker build -t brand-scraper .
 
-### Scraping Strategy
+# Run the container
+docker run -p 3001:3001 --env-file .env brand-scraper
+```
 
-1. **Logo Discovery** (Multi-priority):
-   - Apple Touch Icon
-   - Open Graph image
-   - Common CSS selectors (`img[class*="logo"]`, etc.)
-   - SVG detection
-   - Favicon fallback
+---
 
-2. **Color Extraction**:
-   - Analyzes computed styles from key elements
-   - Filters out generic colors (white, black, transparent)
-   - Converts RGB/RGBA to HEX format
-   - Returns top 8 unique colors
+## ⚙️ Configuration
 
-3. **Font Detection**:
-   - Queries computed `font-family` from typography elements
-   - Extracts primary font from font stack
-   - Deduplicates and returns top 4 fonts
+| Variable          | Default       | Description                            |
+| ----------------- | ------------- | -------------------------------------- |
+| `PORT`            | `3001`        | Server port                            |
+| `NODE_ENV`        | `development` | Environment mode                       |
+| `ALLOWED_ORIGINS` | `*`           | CORS allowed origins (comma-separated) |
 
-4. **Screenshot**:
-   - Viewport-only capture (1280x800)
-   - PNG format, base64 encoded
-   - Optimized for speed
+---
+
+## 🏗️ Architecture
+
+### Scraping Pipeline
+
+```
+Request → URL Validation → Playwright Browser Launch → Page Navigation
+  → Parallel Data Extraction (Logo · Colors · Fonts · Text) → Screenshot Capture
+  → JSON Response
+```
+
+### Extraction Strategies
+
+<details>
+<summary><b>Logo Discovery</b> (6-step priority chain)</summary>
+
+1. Apple Touch Icon / Precomposed Icon
+2. Standard Favicon (`link[rel*="icon"]`)
+3. Logo-labeled elements inside `<header>` / `<nav>`
+4. First `<img>` or `<svg>` in header/nav
+5. Global logo-labeled elements (`img[class*="logo"]`, etc.)
+6. Open Graph image (last resort)
+
+</details>
+
+<details>
+<summary><b>Color Extraction</b></summary>
+
+- Analyzes computed styles from key elements (`h1-h3`, `p`, `button`, `a`, `nav`, `header`)
+- Filters generic colors (white, black, transparent)
+- Converts RGB/RGBA → HEX
+- Returns top 5 unique colors
+
+</details>
+
+<details>
+<summary><b>Font Detection</b></summary>
+
+- Queries computed `font-family` from typography elements
+- Extracts primary font from each font stack
+- Deduplicates results
+
+</details>
 
 ### Browser Configuration
 
-- **Engine:** Chromium (via Playwright)
-- **Mode:** Headless
-- **Viewport:** 1280x800
-- **Wait Strategy:** Network idle with 45s timeout
-- **User Agent:** Modern Chrome on Windows
+| Setting       | Value                      |
+| ------------- | -------------------------- |
+| Engine        | Chromium (via Playwright)  |
+| Mode          | Headless                   |
+| Viewport      | 1280 × 800                 |
+| Wait Strategy | Network idle, 45 s timeout |
+| User Agent    | Chrome 119 on Windows      |
 
-## Security
+---
 
-- CORS protection with configurable origins
-- Request body size limit (10MB)
-- URL validation before scraping
-- Graceful error handling
-- No data persistence
+## 🔒 Security
 
-## Environment Variables
+- **CORS** — Configurable allowed origins
+- **Body Size Limit** — 10 MB max request body
+- **URL Validation** — Strict URL format checking before scraping
+- **Graceful Error Handling** — No stack traces or internals leaked to clients
+- **Stateless** — No data persistence; each request is isolated
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3001` | Server port |
-| `NODE_ENV` | `development` | Environment mode |
-| `ALLOWED_ORIGINS` | `*` | CORS allowed origins (comma-separated) |
+---
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
-### Playwright Installation Issues
-
-If Chromium doesn't install automatically:
+<details>
+<summary>Playwright / Chromium won't install</summary>
 
 ```bash
 npx playwright install chromium
 ```
 
-### Memory Issues
+</details>
 
-For large-scale scraping, increase Node.js memory:
+<details>
+<summary>Out-of-memory errors on large sites</summary>
 
 ```bash
 NODE_OPTIONS="--max-old-space-size=4096" npm start
 ```
 
-## License
+</details>
 
-MIT
+---
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+Contributions, issues, and feature requests are welcome!
+
+1. Fork the repository
+2. Create your feature branch — `git checkout -b feature/amazing-feature`
+3. Commit your changes — `git commit -m "feat: add amazing feature"`
+4. Push to the branch — `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
